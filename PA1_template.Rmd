@@ -33,6 +33,10 @@ Total_Steps <- Activity_dataset %>% group_by(date) %>%
 Total_Steps
 hist(Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
      col = "red", xlim = c(0,22000))
+png(filename = "Plot_RR_1.png", width = 480, height = 480)
+hist(Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
+     col = "red", xlim = c(0,22000))
+dev.off()
 summary(Total_Steps$Total)
 Mean_Total_Steps <- formatC(mean(Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f")
 Median_Total_Steps <- formatC(median(Total_Steps$Total, na.rm = TRUE), digits =3, format = "f")
@@ -54,6 +58,11 @@ Generate an XY line plot.
 plot(Interval$interval,Interval$avg_steps, type="l",
      xlab = "Inverval", ylab = "Number of Steps", 
      main = "Average Number of Steps by Interval")
+png(filename = "Plot_RR_2.png", width = 480, height = 480)
+plot(Interval$interval,Interval$avg_steps, type="l",
+     xlab = "Inverval", ylab = "Number of Steps", 
+     main = "Average Number of Steps by Interval")
+dev.off()
 ```
 Determine the interval that has the maximum number of steps.
 ```{r echo = TRUE}
@@ -91,6 +100,10 @@ New_Total_Steps <- Filled_In %>%
   summarize(Total = sum(steps, na.rm = TRUE))
 hist(New_Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
      col = "red", xlim = c(0,22000))
+png(filename = "Plot_RR_3.png", width = 480, height = 480)
+hist(New_Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
+     col = "red", xlim = c(0,22000))
+dev.off()
 New_Mean_Total_Steps <-formatC(mean(New_Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f") 
 New_Mean_Total_Steps
 New_Median_Total_Steps <- formatC(median(New_Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f")
@@ -104,6 +117,11 @@ colnames(CompareTotals) <- c("Missing_Values", "Filled_In")
 boxplot(CompareTotals, col = c("red", "blue"), ylab = "Total Steps")
 abline(h=Mean_Total_Steps, col = "red", lty = 2, lwd = 2)
 abline(h=New_Mean_Total_Steps, col = "blue", lty = 2, lwd = 2)
+png(filename = "Plot_RR_4.png", width = 480, height = 480)
+boxplot(CompareTotals, col = c("red", "blue"), ylab = "Total Steps")
+abline(h=Mean_Total_Steps, col = "red", lty = 2, lwd = 2)
+abline(h=New_Mean_Total_Steps, col = "blue", lty = 2, lwd = 2)
+dev.off()
 ```
 
 Activity Patterns for Weekday vs. Weekend.
@@ -131,5 +149,12 @@ xyplot(Day_Factor$Mean_Steps ~ Day_Factor$interval | Day_Factor$DayFactor,
        ylab = "Mean Steps", 
        xlab = "Interval",
        layout = c(1,2))
+png(filename = "Plot_RR_5.png", width = 480, height = 480)
+xyplot(Day_Factor$Mean_Steps ~ Day_Factor$interval | Day_Factor$DayFactor, 
+       type = "l", lwd = 1, col = "black", 
+       ylab = "Mean Steps", 
+       xlab = "Interval",
+       layout = c(1,2))
+dev.off()
 ```
 
