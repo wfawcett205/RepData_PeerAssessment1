@@ -1,0 +1,135 @@
+---
+title: "PA1_template.Rmd"
+author: "William P Fawcett"
+date: "February 28, 2016"
+output: html_document
+---
+
+```{r echo = TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(lattice)
+```
+Download data files and unzip.
+```{r echo = TRUE}
+myURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(myURL, destfile = "activity.zip")
+Download_date <- Sys.time()
+unzip("activity.zip")
+```
+Read in the data file: "activity.csv"
+```{r echo = TRUE}
+Activity_dataset <- read.csv("activity.csv")
+Activity_dataset <- tbl_df(Activity_dataset)
+dim(Activity_dataset)
+Activity_dataset
+```
+Determine the total number of steps taken per day.
+Plot histogram.
+Calculate the mean and median number of the total number of steps taken per day.
+```{r echo = TRUE}
+Total_Steps <- Activity_dataset %>% group_by(date) %>% 
+  summarize(Total = sum(steps, na.rm = TRUE))
+Total_Steps
+hist(Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
+     col = "red", xlim = c(0,22000))
+summary(Total_Steps$Total)
+Mean_Total_Steps <- formatC(mean(Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f")
+Median_Total_Steps <- formatC(median(Total_Steps$Total, na.rm = TRUE), digits =3, format = "f")
+Mean_Total_Steps
+Median_Total_Steps
+```
+Explore the average daily activity pattern.
+Calculate the mean for each time interval (288 intervals).
+Determine the interval that has the maximum number of steps.
+```{r echo = TRUE}
+Activity_dataset <- ungroup(Activity_dataset)
+Interval <- Activity_dataset %>% group_by(interval) %>% 
+summarize(avg_steps = formatC(mean(steps, na.rm = TRUE), digits = 3, format = "f"))
+Interval$avg_steps <- as.numeric(Interval$avg_steps)
+Interval
+```
+Generate an XY line plot.
+```{r echo = TRUE}
+plot(Interval$interval,Interval$avg_steps, type="l",
+     xlab = "Inverval", ylab = "Number of Steps", 
+     main = "Average Number of Steps by Interval")
+```
+Determine the interval that has the maximum number of steps.
+```{r echo = TRUE}
+MaxStepInterval <- as.numeric(filter(Interval, avg_steps == max(avg_steps)) %>%
+  select(interval))
+MaxStepInterval
+```
+Calculate the number of rows with "NA"
+```{r echo = TRUE}
+Missing_Step_Values <- nrow(filter(Activity_dataset, is.na(steps)))
+Missing_Step_Values
+```
+Create a new dataset similar to Activity_dataset.
+Impute missing step values: Use mean value for each interval.
+```{r echo = TRUE}
+Filled_In <- Activity_dataset
+for(i in 1:17568){
+  if (is.na(Filled_In$steps[i])){
+    x <- Filled_In$interval[i]
+    j <- 1
+    for (j in 1:288){
+      if(x == Interval$interval[j]){
+        Filled_In$steps[i] <- Interval$avg_steps[j]
+      }
+    }
+  }
+}
+Filled_In$steps <- as.numeric(Filled_In$steps)
+Filled_In
+```
+Generate histogram for New Total Steps.
+```{r echo = TRUE}
+New_Total_Steps <- Filled_In %>% 
+  group_by(date) %>% 
+  summarize(Total = sum(steps, na.rm = TRUE))
+hist(New_Total_Steps$Total, main = "Total Steps Per Day", xlab = "Total Steps", 
+     col = "red", xlim = c(0,22000))
+New_Mean_Total_Steps <-formatC(mean(New_Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f") 
+New_Mean_Total_Steps
+New_Median_Total_Steps <- formatC(median(New_Total_Steps$Total, na.rm = TRUE), digits = 3, format = "f")
+New_Median_Total_Steps
+```
+Compare New Mean/Median Values with the old (original) Mean/Median Values.
+Use a Boxplot. As can be seen the New Mean/Median values (Filled_In) are higher than the original values. The dash lines are the mean values for Missing_Values (red) and Filled_In (blue).
+```{r echo = TRUE}
+CompareTotals <- cbind(Total_Steps$Total, New_Total_Steps$Total)
+colnames(CompareTotals) <- c("Missing_Values", "Filled_In")
+boxplot(CompareTotals, col = c("red", "blue"), ylab = "Total Steps")
+abline(h=Mean_Total_Steps, col = "red", lty = 2, lwd = 2)
+abline(h=New_Mean_Total_Steps, col = "blue", lty = 2, lwd = 2)
+```
+
+Activity Patterns for Weekday vs. Weekend.
+Create a two parameter factor (DayFactor) for Filled_In
+
+```{r echo = TRUE}
+Filled_In$date<-as.Date.character(Filled_In$date)
+Filled_In <- mutate(Filled_In, Day = weekdays(date))
+DayFactor <- Filled_In$Day
+for (i in 1:17568){
+  if (DayFactor[i] == "Saturday" | DayFactor[i] == "Sunday"){
+    DayFactor[i] <- "Weekend"}
+  else{
+    DayFactor[i] <- "Weekday"
+  }
+}
+Filled_In <- cbind(Filled_In, DayFactor)
+Filled_In <- select(Filled_In, steps, date, Day, DayFactor, interval)
+Day_Factor <- Filled_In %>% group_by(DayFactor, interval) %>% 
+  summarise(Mean_Steps = mean(steps))
+Day_Factor$Mean_Steps <- as.numeric(formatC(Day_Factor$Mean_Steps, digits = 3, format = "f"))
+Day_Factor
+xyplot(Day_Factor$Mean_Steps ~ Day_Factor$interval | Day_Factor$DayFactor, 
+       type = "l", lwd = 1, col = "black", 
+       ylab = "Mean Steps", 
+       xlab = "Interval",
+       layout = c(1,2))
+```
+
